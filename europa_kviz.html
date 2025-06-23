@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Európa országai és fővárosai kvíz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #fff;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .question {
+            margin: 20px 0;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .progress {
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 10px;
+            background: #007bff;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .feedback {
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .hidden {
+            display: none;
+        }
+        .result {
+            text-align: center;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Európa országai és fővárosai kvíz</h1>
+        <div id="quiz">
+            <div id="question-container" class="question"></div>
+            <div id="options-container" class="options"></div>
+            <div id="input-container" class="hidden">
+                <input type="text" id="text-answer" placeholder="Írd be a választ...">
+            </div>
+            <div class="progress">
+                <div id="progress-text">0/10 kérdés</div>
+                <div style="background: #ccc; height: 10px;">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+            <div id="feedback" class="feedback"></div>
+            <button id="next-btn" class="hidden">Következő</button>
+            <button id="restart-btn" class="hidden">Új játék</button>
+        </div>
+    </div>
+    <script>
+        const data = {
+            "Albánia": "Tirana", "Andorra": "Andorra la Vella", "Ausztria": "Bécs", "Fehéroroszország": "Minszk",
+            "Belgium": "Brüsszel", "Bosznia-Hercegovina": "Szarajevó", "Bulgária": "Szófia", "Horvátország": "Zágráb",
+            "Ciprus": "Nicosia", "Csehország": "Prága", "Dánia": "Koppenhága", "Észtország": "Tallinn",
+            "Finnország": "Helsinki", "Franciaország": "Párizs", "Németország": "Berlin", "Görögország": "Athén",
+            "Magyarország": "Budapest", "Izland": "Reykjavik", "Írország": "Dublin", "Olaszország": "Róma",
+            "Lettország": "Riga", "Liechtenstein": "Vaduz", "Litvánia": "Vilnius", "Luxemburg": "Luxembourg",
+            "Málta": "Valletta", "Moldova": "Kisinyov", "Monako": "Monaco", "Montenegró": "Podgorica",
+            "Hollandia": "Amszterdam", "Észak-Macedónia": "Szkopje", "Norvégia": "Oslo", "Lengyelország": "Varsó",
+            "Portugália": "Lisszabon", "Románia": "Bukarest", "Oroszország": "Moszkva", "San Marino": "San Marino",
+            "Szerbia": "Belgrád", "Szlovákia": "Pozsony", "Szlovénia": "Ljubljana", "Spanyolország": "Madrid",
+            "Svédország": "Stockholm", "Svájc": "Bern", "Ukrajna": "Kijev", "Egyesült Királyság": "London",
+            "Vatikán": "Vatikán"
+        };
+
+        const countries = Object.keys(data);
+        const capitals = Object.values(data);
+        let questions = [];
+        let currentQuestion = 0;
+        let score = 0;
+        let level = 1;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function generateQuestions() {
+            questions = [];
+            const used = new Set();
+            while (questions.length < 10) {
+                let country = countries[Math.floor(Math.random() * countries.length)];
+                if (used.has(country)) continue;
+                used.add(country);
+                let type = questions.length % 2 === 0 ? "country-to-capital" : "capital-to-country";
+                questions.push({ country, capital: data[country], type });
+            }
+        }
+
+        function showQuestion() {
+            document.getElementById("feedback").textContent = "";
+            document.getElementById("next-btn").classList.add("hidden");
+            document.getElementById("text-answer").value = "";
+            const q = questions[currentQuestion];
+            document.getElementById("input-container").classList.add("hidden");
+            document.getElementById("options-container").innerHTML = "";
+            let questionText = "";
+            if (q.type === "country-to-capital") {
+                questionText = `Melyik város ${q.country} fővárosa?`;
+            } else {
+                questionText = `Melyik ország fővárosa ${q.capital}?`;
+            }
+            document.getElementById("question-container").textContent = questionText;
+            if (level === 1) {
+                let options = [];
+                if (q.type === "country-to-capital") {
+                    options = capitals.filter(c => c !== q.capital);
+                    shuffle(options);
+                    options = options.slice(0, 3);
+                    options.push(q.capital);
+                } else {
+                    options = countries.filter(c => c !== q.country);
+                    shuffle(options);
+                    options = options.slice(0, 3);
+                    options.push(q.country);
+                }
+                shuffle(options);
+                options.forEach(opt => {
+                    const btn = document.createElement("button");
+                    btn.textContent = opt;
+                    btn.onclick = () => checkAnswer(opt);
+                    document.getElementById("options-container").appendChild(btn);
+                });
+            } else {
+                document.getElementById("input-container").classList.remove("hidden");
+                const btn = document.createElement("button");
+                btn.textContent = "Válasz elküldése";
+                btn.onclick = () => {
+                    const answer = document.getElementById("text-answer").value.trim();
+                    checkAnswer(answer);
+                };
+                document.getElementById("options-container").appendChild(btn);
+            }
+            document.getElementById("progress-text").textContent = `${currentQuestion + 1}/10 kérdés`;
+            document.getElementById("progress-bar").style.width = `${(currentQuestion + 1) * 10}%`;
+        }
+
+        function checkAnswer(answer) {
+            const q = questions[currentQuestion];
+            let correct = false;
+            if (q.type === "country-to-capital") {
+                correct = answer === q.capital;
+            } else {
+                correct = answer === q.country;
+            }
+            if (correct) {
+                score++;
+                document.getElementById("feedback").textContent = "Helyes válasz!";
+                document.getElementById("feedback").style.color = "green";
+            } else {
+                document.getElementById("feedback").textContent = `Helytelen válasz! A helyes válasz: ${q.type === "country-to-capital" ? q.capital : q.country}`;
+                document.getElementById("feedback").style.color = "red";
+            }
+            document.getElementById("next-btn").classList.remove("hidden");
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < 10) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById("question-container").innerHTML = "";
+            document.getElementById("options-container").innerHTML = "";
+            document.getElementById("input-container").classList.add("hidden");
+            document.getElementById("next-btn").classList.add("hidden");
+            let percent = Math.round(score * 10);
+            let resultText = `<h2>${score}/10 pont (${percent}%)</h2>`;
+            if (score === 10 && level === 1) {
+                resultText += "<p>Gratulálok! Hibátlan teljesítmény! Folytathatod a második szinttel.</p>";
+                level = 2;
+                document.getElementById("restart-btn").textContent = "Második szint indítása";
+            } else if (level === 2 && score === 10) {
+                resultText += "<p>Gratulálok! Hibátlan teljesítmény!</p>";
+                document.getElementById("restart-btn").textContent = "Új játék";
+            } else {
+                resultText += "<p>További gyakorlás javasolt.</p>";
+                document.getElementById("restart-btn").textContent = "Újra próbálom";
+            }
+            document.getElementById("question-container").innerHTML = resultText;
+            document.getElementById("restart-btn").classList.remove("hidden");
+        }
+
+        function startQuiz() {
+            generateQuestions();
+            currentQuestion = 0;
+            score = 0;
+            document.getElementById("restart-btn").classList.add("hidden");
+            showQuestion();
+        }
+
+        document.getElementById("next-btn").onclick = nextQuestion;
+        document.getElementById("restart-btn").onclick = startQuiz;
+
+        startQuiz();
+    </script>
+</body>
+</html>
